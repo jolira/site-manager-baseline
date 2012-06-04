@@ -1,0 +1,11 @@
+.DS_Store
+node_modules
+sites/*
+.nide
+.idea
+*~
+*.log
+.idea
+.project
+.buildpath
+.settings
