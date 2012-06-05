@@ -29,7 +29,7 @@
 
         app.router = new Router();
         app.initializers.forEach(function(initializer) {
-            initializer(app, "#main-content");
+            initializer(app);
         });
 
         delete app.initializers;
