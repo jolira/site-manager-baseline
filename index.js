@@ -11,6 +11,7 @@
             "js/libs/underscore/underscore-1.3.3.js",
             "js/libs/jquery/jquery-1.7.2.js",
             "js/libs/backbone/backbone-0.9.2.js",
+            "js/libs/lawnchair-0.6.1.js",
             "js/app-starter.js"
         ].forEach(function (dir) {
                 defaults.tailingScripts.push(dir);
@@ -19,10 +20,6 @@
             {
                 "name":"HandheldFriendly",
                 "content":"True"
-            },
-            {
-                "name":"MobileOptimized",
-                "content":"320"
             },
             {
                 "name": "viewport",
