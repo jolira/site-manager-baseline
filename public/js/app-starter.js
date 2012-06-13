@@ -3,26 +3,23 @@
     "use strict";
 
     var cache = {},
-        app = window["jolira-app"] = {
-            getTemplate:function (id) {
-                if (cache[id]) {
-                    return cache[id];
-                }
+        app = window["jolira-app"] = window["jolira-app"] || {};
 
-                var script = $(id),
-                    html = script.html();
+    app.initializers = [];
+    app.getTemplate = function (id) {
+        if (cache[id]) {
+            return cache[id];
+        }
 
-                if (!html) {
-                    throw Error("no html fragment found for " + id);
-                }
+        var script = $(id),
+            html = script.html();
 
-                return cache[id] = _.template(html);
-            },
-            /**
-             * Add your callback to this array
-             */
-            initializers: []
-        };
+        if (!html) {
+            throw Error("no html fragment found for " + id);
+        }
+
+        return cache[id] = _.template(html);
+    };
 
     $(function(){
         var Router = Backbone.Router.extend({});

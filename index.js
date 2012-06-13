@@ -3,6 +3,7 @@
     "use strict";
 
     var path = require("path"),
+        bootstrap = require("site-manager-bootstrap"),
         templates = path.join(__dirname, "templates"),
         pubdir = path.join(__dirname, "public");
 
@@ -14,7 +15,7 @@
             "js/libs/lawnchair-0.6.1.js",
             "js/app-starter.js"
         ].forEach(function (dir) {
-                defaults.tailingScripts.push(dir);
+                defaults.trailingScripts.push(dir);
             });
         [
             {
@@ -35,8 +36,13 @@
             }
         ].forEach(function(meta){
                 defaults.metas.push(meta);
-            })
-        defaults["public"].unshift(pubdir);
+            });
+        [
+            bootstrap,
+            pubdir
+        ].forEach(function(dir) {
+                defaults["public"].unshift(dir);
+            });
         defaults.links.push({
             rel: "apple-touch-startup-image",
             href: "startup.png"
