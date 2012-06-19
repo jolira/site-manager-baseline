@@ -8,7 +8,7 @@
         pubdir = path.join(__dirname, "public"),
         dispatcher = require("./lib/dispatcher");
 
-    module.exports = function (defaults, app, cb, logger) {
+    module.exports = function (defaults, app, cb) {
         dispatcher(app, function (err, dispatcher) {
             [
                 // 3rd party libraries
@@ -62,6 +62,6 @@
             defaults.useRequireJS = false;
 
             return cb(undefined, defaults, dispatcher);
-        }, logger);
+        });
     };
 })(module);
