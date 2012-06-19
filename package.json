@@ -1,6 +1,6 @@
 {
     "name":"site-manager-baseline",
-    "version":"0.1.0",
+    "version":"0.1.1",
     "description":"Client-side UI for the Site-Manager applications",
     "keywords":["site", "html5", "mobile"],
     "contributors": [
@@ -13,6 +13,7 @@
     "dependencies":{
         "node-uuid": "*",
         "socket.io": "*",
+        "handlebars": "*",
         "site-manager-bootstrap" : "*"
     },
     "devDependencies":{

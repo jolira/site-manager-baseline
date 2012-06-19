@@ -9,7 +9,7 @@
         dispatcher = require("./lib/dispatcher");
 
     module.exports = function (defaults, app, cb) {
-        dispatcher(app, function (err, dispatcher) {
+        dispatcher(defaults, app, function (err, dispatcher) {
             [
                 // 3rd party libraries
                 "socket.io/socket.io.js",
