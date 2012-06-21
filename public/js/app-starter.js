@@ -22,14 +22,23 @@
     };
 
     $(function(){
-        var Router = Backbone.Router.extend({});
-
-        app.router = new Router();
-        app.initializers.forEach(function(initializer) {
-            initializer(app);
-        });
+        var Router = Backbone.Router.extend({}),
+            initializers = app.initializers;
 
         delete app.initializers;
-        Backbone.history.start();
+
+        app.router = new Router();
+
+        function init() {
+            var initializer = initializers.shift();
+
+            if (!initializer) {
+                return Backbone.history.start();
+            }
+
+            return initializer(init);
+        }
+
+        init();
     });
 })($, _, Backbone);

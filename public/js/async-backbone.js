@@ -19,24 +19,27 @@
         return app.socket.emit("device", "synchronize", id);
     }
 
-    new Lawnchair({name:'tailoring'}, function(store) {
-        var url = getServerURL();
+    app.initializers.push(function(next) {
+        new Lawnchair({name:'tailoring'}, function(store) {
+            var url = getServerURL();
 
-        app.store = store;
-        app.socket = io.connect(url);
-        app.socket.on('init', function (props) {
-            store.get("device", function(device) {
-                if (device) {
-                    return init(device.id);
-                }
+            app.store = store;
+            app.socket = io.connect(url);
+            app.socket.on('init', function (props) {
+                store.get("device", function(device) {
+                    if (device) {
+                        return init(device.id);
+                    }
 
-                return store.save({
-                    key: "device",
-                    id: props.session
-                }, function(device) {
-                    return init(device.id);
+                    return store.save({
+                        key: "device",
+                        id: props.session
+                    }, function(device) {
+                        return init(device.id);
+                    });
                 });
             });
+            return next();
         });
     });
 })(io, $, _, Backbone, Lawnchair, window.location, window["jolira-app"]);

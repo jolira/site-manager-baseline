@@ -16,7 +16,9 @@
                 "js/libs/underscore/underscore-1.3.3.js",
                 "js/libs/jquery/jquery-1.7.2.js",
                 "js/libs/backbone/backbone-0.9.2.js",
-                "js/libs/lawnchair-0.6.1.js",
+                "js/libs/lawnchair/lawnchair-0.6.1.js",
+                "js/libs/lawnchair/indexed-db-0.6.1.js",
+                "js/libs/lawnchair/webkit-sqlite-0.6.1.js",
                 // local stuff
                 "js/app-starter.js",
                 "js/async-backbone.js"
