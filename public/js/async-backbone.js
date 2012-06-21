@@ -15,8 +15,9 @@
         return protocol + location.hostname + port;
     }
 
-    function init(socket, id) {
-        return app.socket.emit("device", "synchronize", id);
+    function ready(socket, id) {
+        app.socket.emit("device", "synchronize", id);
+        app.trigger("device-ready", id)
     }
 
     app.initializers.push(function(next) {
@@ -25,17 +26,17 @@
 
             app.store = store;
             app.socket = io.connect(url);
-            app.socket.on('init', function (props) {
+            app.socket.on('ready', function (props) {
                 store.get("device", function(device) {
                     if (device) {
-                        return init(device.id);
+                        return ready(device.id);
                     }
 
                     return store.save({
                         key: "device",
                         id: props.session
                     }, function(device) {
-                        return init(device.id);
+                        return ready(device.id);
                     });
                 });
             });
