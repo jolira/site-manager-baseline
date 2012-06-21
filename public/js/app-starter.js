@@ -1,9 +1,10 @@
 /*global PhoneGap:false, require:false */
-(function ($, _, Backbone) {
+(function ($, _, Backbone, app) {
     "use strict";
 
-    var cache = {},
-        app = window["jolira-app"] = window["jolira-app"] || {};
+    var cache = {};
+
+    _.extend(app, Backbone.Events);
 
     app.initializers = [];
     app.getTemplate = function (id) {
@@ -41,4 +42,4 @@
 
         init();
     });
-})($, _, Backbone);
+})($, _, Backbone, window["jolira-app"]);

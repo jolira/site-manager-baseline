@@ -20,7 +20,7 @@
     }
 
     app.initializers.push(function(next) {
-        new Lawnchair({name:'tailoring'}, function(store) {
+        new Lawnchair(function(store) {
             var url = getServerURL();
 
             app.store = store;
