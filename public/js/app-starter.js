@@ -30,6 +30,15 @@
 
         app.router = new Router();
 
+        var route = app.router.route;
+
+        app.router.route = function (_route, name, cb) {
+            return route.call(app.router, _route, name, function () {
+                app.log("route", _route, name, Array.prototype.slice.call(arguments));
+                return cb.apply(this, arguments);
+            });
+        };
+
         function init() {
             var initializer = initializers.shift();
 
