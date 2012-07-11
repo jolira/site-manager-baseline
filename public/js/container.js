@@ -9,15 +9,19 @@
          *
          * @param route the route (passed to backbone.js)
          * @param name the name of the route
-         * @param View the view to be rendered
+         * @param creator the method to be called to create the view
          */
-        app.addRoutableView = function(route, name, View){
+        app.addRoute = function(route, name, creator){
             app.router.route(route, name, function() {
-                var args = arguments,
-                    $children = $('body > *');
+                var $children = $('body > *'),
+                    args = Array.prototype.slice.call(arguments);
 
-                if (app.currentView && app.currentView.close) {
-                    app.currentView.close();
+                if (app.currentView) {
+                    if (app.currentView.close) {
+                        app.currentView.close();
+                    }
+
+                    delete app.currentView;
                 }
 
                 $children.each(function(idx, child) {
@@ -29,13 +33,22 @@
                     }
                 });
 
-                app.currentView = new View({
-                    arguments: args
+                args.push(function(err, view) {
+                    if (err) {
+                        return app.error(err);
+                    }
+
+                    var rendered = view.render();
+
+                    app.currentView = view;
+
+                    $('body > header').after(rendered.el);
+
                 });
 
-                var rendered = app.currentView.render();
+                creator.apply(this, args);
 
-                $('body > header').after(rendered.el);
+                return false;
             });
         };
 
