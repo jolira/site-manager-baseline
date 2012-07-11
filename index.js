@@ -51,6 +51,19 @@
             ].forEach(function (dir) {
                     defaults["public"].unshift(dir);
                 });
+            defaults.htmlFiles = [
+                path.join(templates, "container.html")
+            ];
+            defaults.templateFiles = [
+                path.join(templates, "menu.html")
+            ];
+            [
+                "js/bootstrap-collapse.js",
+                "js/container.js",
+                "js/menu.js"
+            ].forEach(function (dir) {
+                    defaults.trailingScripts.push(dir);
+                });
             [
                 "img/glyphicons-halflings.png",
                 "img/glyphicons-halflings-white.png"
