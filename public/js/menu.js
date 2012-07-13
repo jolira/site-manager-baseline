@@ -1,18 +1,41 @@
 (function ($, _, Backbone, app) {
     "use strict";
 
+    function getValue(object, prop, cb) {
+        var value = object[prop];
+
+        if (!value) {
+            return cb();
+        }
+
+        if (_.isFunction(value)) {
+            return value(cb);
+        }
+
+        return cb (value);
+    }
+
     var menu = [];
 
     function open(view) {
         var $menu = view.$(".dropdown-menu");
 
         menu.forEach(function (item) {
-            var $item = $('<li><a href="#">' + item.title + '</a></li>');
+            var $item = $('<li style="display:none">');
 
-            $item.click(function () {
-                item.cb(item.id);
-            });
             $menu.append($item);
+
+            getValue(item, "title", function(title) {
+                if (title) {
+                    $item.append('<a href="#">' + title + '</a>');
+                    $item.click(function () {
+                        getValue(item, "id", function(id) {
+                            item.cb(id);
+                        });
+                    });
+                    $item.show();
+                }
+            });
         });
 
         // $menu.append('<li class="divider"></li>');
