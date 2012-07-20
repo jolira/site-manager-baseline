@@ -1,6 +1,10 @@
 (function ($, _, Backbone, app) {
     "use strict";
 
+    var selector = app.isQUnit ? "#qview" : "body",
+        childSelector = selector + ' > *',
+        headerSelector = selector + ' > header';
+
     app.initializers.push(function (next) {
         /**
          * Allow users to add their own routable views. When creating view
@@ -13,7 +17,7 @@
          */
         app.addRoute = function(route, name, creator){
             app.router.route(route, name, function() {
-                var $children = $('body > *'),
+                var $children = $(childSelector),
                     args = Array.prototype.slice.call(arguments);
 
                 if (app.currentView) {
@@ -42,7 +46,7 @@
 
                     app.currentView = view;
 
-                    $('body > header').after(rendered.el);
+                    $(headerSelector).after(rendered.el);
 
                 });
 
