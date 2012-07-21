@@ -65,10 +65,10 @@
         });
     };
 
-    app.initializers.push(function (next) {
+    app.starter.initializers.push(function (next) {
         var isOpen = false,
             MenuButton = Backbone.View.extend({
-                template:app.getTemplate("script[id='menu']"),
+                template:app.utils.template("script[id='menu']"),
                 render:function () {
                     $(this.el).addClass("menu-btn dropdown-toggle").html(this.template({}));
                     return this;

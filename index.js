@@ -21,7 +21,11 @@
                 "js/libs/lawnchair/webkit-sqlite-0.6.1.js",
                 // local stuff
                 "js/app-starter.js",
-                "js/async-backbone.js"
+                "js/middleware.js",
+                "js/bootstrap-collapse.js",
+                "js/container.js",
+                "js/menu.js",
+                "js/utils.js"
             ].forEach(function (dir) {
                     defaults.trailingScripts.push(dir);
                 });
@@ -57,13 +61,6 @@
             defaults.templateFiles = [
                 path.join(templates, "menu.html")
             ];
-            [
-                "js/bootstrap-collapse.js",
-                "js/container.js",
-                "js/menu.js"
-            ].forEach(function (dir) {
-                    defaults.trailingScripts.push(dir);
-                });
             [
                 "img/glyphicons-halflings.png",
                 "img/glyphicons-halflings-white.png"

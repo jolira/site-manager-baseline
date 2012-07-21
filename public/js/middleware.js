@@ -1,6 +1,8 @@
 (function (io, $, _, Backbone, Lawnchair, location, app) {
     "use strict";
 
+    app.middle = app.middle || {};
+
     var SECURE = "{{secure}}" == "true",
         PORT = "{{port}}";
 
@@ -15,23 +17,23 @@
         return protocol + location.hostname + port;
     }
 
-    function ready(socket, id, session) {
-        app.socket.emit("device", "synchronize", id, session);
-        app.trigger("device-ready", id, session)
+    function ready(id, session) {
+        app.middle.socket.emit("device", "synchronize", id, session);
+        app.middle.trigger("device-ready", id, session)
     }
 
     app.starter.initializers.push(function (next) {
         new Lawnchair(function (store) {
             var url = getServerURL();
 
-            app.store = store;
-            app.socket = io.connect(url);
-            app.socket.on('ready', function (props) {
+            app.middle.store = store;
+            app.middle.socket = io.connect(url);
+            app.middle.socket.on('ready', function (props) {
                 app.log = app.debug = function () {
-                    app.socket.emit("log", props.session, new Date(), Array.prototype.slice.call(arguments));
+                    app.middle.socket.emit("log", props.session, new Date(), Array.prototype.slice.call(arguments));
                 };
                 app.error = function () {
-                    app.socket.emit("error", props.session, new Date(), Array.prototype.slice.call(arguments));
+                    app.middle.socket.emit("error", props.session, new Date(), Array.prototype.slice.call(arguments));
                 };
                 store.get("device", function (device) {
                     if (device) {

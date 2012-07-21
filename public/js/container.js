@@ -3,7 +3,7 @@
 
     app.container = app.container || {};
     app.container.anchor = app.container.anchor || "body";
-    app.initializers.push(function (next) {
+    app.starter.initializers.push(function (next) {
         /**
          * Allow users to add their own routable views. When creating view
          * the options are passed to the constructor, which contain the
@@ -17,7 +17,7 @@
          *        is called.
          */
         app.container.route = function(route, name, creator, router){
-            router = router || app.router.route;
+            router = router || app.starter.router.route;
 
             router(route, name, function() {
                 var childSelector = app.container.anchor + ' > *',
@@ -25,12 +25,12 @@
                     $children = $(childSelector),
                     args = Array.prototype.slice.call(arguments);
 
-                if (app.currentView) {
-                    if (app.currentView.close) {
-                        app.currentView.close();
+                if (app.container.currentView) {
+                    if (app.container.currentView.close) {
+                        app.container.currentView.close();
                     }
 
-                    delete app.currentView;
+                    delete app.container.currentView;
                 }
 
                 $children.each(function(idx, child) {
@@ -49,7 +49,7 @@
 
                     var rendered = view.render();
 
-                    app.currentView = view;
+                    app.container.currentView = view;
 
                     $(headerSelector).after(rendered.el);
 
