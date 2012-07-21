@@ -1,10 +1,8 @@
 (function ($, _, Backbone, app) {
     "use strict";
 
-    var selector = app.isQUnit ? "#qview" : "body",
-        childSelector = selector + ' > *',
-        headerSelector = selector + ' > header';
-
+    app.container = app.container || {};
+    app.container.anchor = app.container.anchor || "body";
     app.initializers.push(function (next) {
         /**
          * Allow users to add their own routable views. When creating view
@@ -15,9 +13,11 @@
          * @param name the name of the route
          * @param creator the method to be called to create the view
          */
-        app.addRoute = function(route, name, creator){
+        app.container.route = function(route, name, creator){
             app.router.route(route, name, function() {
-                var $children = $(childSelector),
+                var childSelector = app.container.anchor + ' > *',
+                    headerSelector = app.container.anchor + ' > header',
+                    $children = $(childSelector),
                     args = Array.prototype.slice.call(arguments);
 
                 if (app.currentView) {
