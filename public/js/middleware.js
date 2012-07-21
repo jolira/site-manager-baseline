@@ -20,7 +20,7 @@
         app.trigger("device-ready", id, session)
     }
 
-    app.initializers.push(function (next) {
+    app.starter.initializers.push(function (next) {
         new Lawnchair(function (store) {
             var url = getServerURL();
 
