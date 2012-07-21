@@ -1,6 +1,13 @@
 (function ($, _, Backbone, app) {
     "use strict";
 
+    /**
+     * Define the menu operator.
+     *
+     * @type {*}
+     */
+    app.menu = app.menu || {};
+
     function getValue(object, prop, cb) {
         var value = object[prop];
 
@@ -50,7 +57,7 @@
         return false;
     }
 
-    app.addMenu = function (id, title, cb) {
+    app.menu.add = app.menu.add || function (id, title, cb) {
         menu.push({
             id:id,
             title:title,
