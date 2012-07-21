@@ -12,9 +12,14 @@
          * @param route the route (passed to backbone.js)
          * @param name the name of the route
          * @param creator the method to be called to create the view
+         * @param router this parameter allows us to override the router function
+         *        to be called. If this method is not passed, app.router.route
+         *        is called.
          */
-        app.container.route = function(route, name, creator){
-            app.router.route(route, name, function() {
+        app.container.route = function(route, name, creator, router){
+            router = router || app.router.route;
+
+            router(route, name, function() {
                 var childSelector = app.container.anchor + ' > *',
                     headerSelector = app.container.anchor + ' > header',
                     $children = $(childSelector),
