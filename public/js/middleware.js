@@ -1,10 +1,15 @@
 (function (io, $, _, Backbone, Lawnchair, location, app) {
     "use strict";
 
+    var DEVICE = "device",
+        READY = "ready",
+        LOG = "log",
+        SECURE = "{{secure}}" == "true",
+        PORT = "{{port}}";
+
     app.middle = app.middle || {};
 
-    var SECURE = "{{secure}}" == "true",
-        PORT = "{{port}}";
+    _.extend(app.middle, Backbone.Events);
 
     function getServerURL() {
         var protocol = SECURE ? "https://" : "http://",
@@ -18,8 +23,14 @@
     }
 
     function ready(id, session) {
-        app.middle.socket.emit("device", "synchronize", id, session);
-        app.middle.trigger("device-ready", id, session)
+        app.log = app.debug = function () {
+            app.middle.socket.emit(LOG, id, session, new Date(), Array.prototype.slice.call(arguments));
+        };
+        app.error = function () {
+            app.middle.socket.emit("error", id, session, new Date(), Array.prototype.slice.call(arguments));
+        };
+        // app.middle.socket.emit("device", "synchronize", id, session);
+        app.middle.trigger(READY, id, session)
     }
 
     app.starter.initializers.push(function (next) {
@@ -28,23 +39,17 @@
 
             app.middle.store = store;
             app.middle.socket = io.connect(url);
-            app.middle.socket.on('ready', function (props) {
-                app.log = app.debug = function () {
-                    app.middle.socket.emit("log", props.session, new Date(), Array.prototype.slice.call(arguments));
-                };
-                app.error = function () {
-                    app.middle.socket.emit("error", props.session, new Date(), Array.prototype.slice.call(arguments));
-                };
-                store.get("device", function (device) {
+            app.middle.socket.on(READY, function (props) {
+                store.get(DEVICE, function (device) {
                     if (device) {
-                        return ready(device.id);
+                        return ready(device.id, props.session);
                     }
 
                     return store.save({
-                        key:"device",
+                        key:DEVICE,
                         id:props.session
                     }, function (device) {
-                        return ready(device.id);
+                        return ready(device.id, props.session);
                     });
                 });
             });
