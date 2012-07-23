@@ -1,4 +1,4 @@
-(function (io, $, _, Backbone, Lawnchair, location, app) {
+(function (window, io, $, _, Backbone, Lawnchair, location, app) {
     "use strict";
 
     var DEVICE = "device",
@@ -29,8 +29,16 @@
         try {
             return JSON.stringify(arg);
         }
-        catch(e) {
-            return "<<circular>>"
+        catch (e) {
+            var simpified = {};
+
+            _.each(arg, function (entry, key) {
+                if (entry !== window) {
+                    simpified[key] = entry;
+                }
+            });
+
+            return convert(simpified);
         }
     }
 
@@ -44,7 +52,7 @@
                 new Date()
             ];
 
-        args.forEach(function(arg) {
+        args.forEach(function (arg) {
             var param = convert(arg);
 
             params.push(param);
@@ -106,6 +114,22 @@
         return _.isFunction(value) ? value() : value;
     }
 
+    function readAsync(model, segments, options) {
+        var url = segments.join('/');
+
+        return app.middle.store.get(url, function(result) {
+            return options && options.success && options.success(result);
+        });
+    }
+
+    function asyncSync(method, model, segments, options) {
+        if (method === 'read') {
+            return readAsync(model, segments, options);
+        }
+
+        throw new Error("not yet supported");
+    }
+
     /**
      * Performs create, read, update, and delete operations.
      *
@@ -115,25 +139,31 @@
      * @return {*}
      */
     Backbone.sync = function (method, model, options) {
-        // Default options, unless specified.
-        options || (options = {});
+        var url = model.url(),
+            segments = url.split('/'),
+            base = segments.shift();
 
-        var url = getValue(model, 'url'),
-            data = model.toJSON(),
+        if (base === 'async') {
+            return asyncSync(method, model, segments, options);
+        }
+
+        var data = model.toJSON(),
             changed = model.changedAttributes();
 
-        socket.emit('jolira-sync', {
-            url:url,
-            data:data,
-            changed:changed
-        }, function (err, data) {
+        app.middle.socket.emit("store", url, data, changed, function(err, result) {
             if (err) {
-                return options.error(model, err);
+                if (options && options.errror) {
+                    return options.errror(err);
+                }
+
+                return app.error("sync failed", url, data, changed, err);
             }
 
-            return options.success(data);
+            if (options && options.success) {
+                return options.success(result);
+            }
         });
 
         return undefined;
     };
-})(io, $, _, Backbone, Lawnchair, window.location, window["jolira-app"]);
+})(window, io, $, _, Backbone, Lawnchair, window.location, window["jolira-app"]);
