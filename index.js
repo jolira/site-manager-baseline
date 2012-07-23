@@ -6,10 +6,13 @@
         bootstrap = require("site-manager-bootstrap"),
         templates = path.join(__dirname, "templates"),
         pubdir = path.join(__dirname, "public"),
+        clientLogger = require("./lib/client-logger"),
         dispatcher = require("./lib/dispatcher");
 
     module.exports = function (defaults, app, cb) {
         dispatcher(defaults, app, function (err, dispatcher) {
+            dispatcher.on(clientLogger(app.logger));
+
             [
                 // 3rd party libraries
                 "socket.io/socket.io.js",

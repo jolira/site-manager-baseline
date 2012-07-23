@@ -122,7 +122,7 @@
             data = model.toJSON(),
             changed = model.changedAttributes();
 
-        socket.emit('jolira-baseline-sync', {
+        socket.emit('jolira-sync', {
             url:url,
             data:data,
             changed:changed
