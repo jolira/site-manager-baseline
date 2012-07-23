@@ -19,13 +19,14 @@
                 "js/libs/lawnchair/lawnchair-0.6.1.js",
                 "js/libs/lawnchair/indexed-db-0.6.1.js",
                 "js/libs/lawnchair/webkit-sqlite-0.6.1.js",
+                "js/bootstrap-collapse.js",
                 // local stuff
                 "js/app-starter.js",
-                "js/middleware.js",
-                "js/bootstrap-collapse.js",
-                "js/container.js",
-                "js/menu.js",
-                "js/utils.js"
+                "js/app-middle.js",
+                "js/app-backbone.js",
+                "js/app-container.js",
+                "js/app-menu.js",
+                "js/app-utils.js"
             ].forEach(function (dir) {
                     defaults.trailingScripts.push(dir);
                 });

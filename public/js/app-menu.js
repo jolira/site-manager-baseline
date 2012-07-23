@@ -60,8 +60,6 @@
     var initialized = false;
 
     function initialize() {
-        initialized = true;
-
         var isOpen = false,
             MenuButton = Backbone.View.extend({
                 template:app.utils.template("script[id='menu']"),
@@ -88,12 +86,13 @@
         });
 
         $("body > header").append(rendered.el);
-        return next();
+
+        initialized = true;
     }
 
     app.starter.$(function (next) {
         app.menu.add = app.menu.add || function (id, title, cb) {
-            if (initialized) {
+            if (!initialized) {
                 initialize();
             }
 
@@ -103,5 +102,7 @@
                 cb:cb
             });
         };
+
+        return next();
     });
 })($, _, Backbone, window["jolira-app"]);

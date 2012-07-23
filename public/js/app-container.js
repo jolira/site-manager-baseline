@@ -4,6 +4,8 @@
     app.container = app.container || {};
     app.container.anchor = app.container.anchor || "body";
     app.starter.$(function (next) {
+        var current;
+
         /**
          * Allow users to add their own routable views. When creating view
          * the options are passed to the constructor, which contain the
@@ -17,7 +19,7 @@
          *        is called.
          */
         app.container.route = function (route, name, creator, router) {
-            router = router || app.starter.route;
+            router = router || app.backbone.route;
 
             router(route, name, function () {
                 var childSelector = app.container.anchor + ' > *',
@@ -25,12 +27,12 @@
                     $children = $(childSelector),
                     args = Array.prototype.slice.call(arguments);
 
-                if (app.container.current) {
-                    if (app.container.current.close) {
-                        app.container.current.close();
+                if (current) {
+                    if (current.close) {
+                        current.close();
                     }
 
-                    delete app.container.current;
+                    current = undefined;
                 }
 
                 $children.each(function (idx, child) {
@@ -49,7 +51,7 @@
 
                     var rendered = view.render();
 
-                    app.container.current = view;
+                    current = view;
 
                     $(headerSelector).after(rendered.el);
 

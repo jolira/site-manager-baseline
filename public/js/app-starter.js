@@ -2,38 +2,45 @@
 (function ($, _, Backbone, app) {
     "use strict";
 
-    var cache = {};
-
+    /**
+     * Create a starter object, which governs the execution of the initialization scripts.
+     *
+     */
     app.starter = app.starter || {};
-    app.starter.initializers = app.starter.initializers || [];
 
-    $(function(){
-        var Router = Backbone.Router.extend({}),
-            initializers = app.starter.initializers;
+    _.extend(app.starter, Backbone.Events);
 
-        delete app.starter.initializers;
+    var initializers = [];
 
-        app.starter.router = new Router();
-
-        var route = app.starter.router.route;
-
-        app.starter.router.route = function (_route, name, cb) {
-            return route.call(app.starter.router, _route, name, function () {
-                app.log("route", _route, name, Array.prototype.slice.call(arguments));
-                return cb.apply(this, arguments);
-            });
-        };
-
-        function init() {
-            var initializer = initializers.shift();
-
-            if (!initializer) {
-                return Backbone.history.start();
-            }
-
-            return initializer(init);
+    app.starter.$ = function(){
+        if (!initializers) {
+            throw new Error("initialization already started");
         }
 
-        init();
+        var args = Array.prototype.slice.call(arguments);
+
+        args.forEach(function(init) {
+            initializers.push(init);
+        });
+    };
+
+    function incrementalInit(inits) {
+        var init = inits && inits.shift();
+
+        if (!init) {
+            return app.starter.trigger("initialized");
+        }
+
+        return init(function (updatedInits) {
+            return incrementalInit(updatedInits || inits);
+        }, inits);
+    }
+
+    $(function () {
+        var inits = initializers;
+
+        initializers = undefined;
+
+        incrementalInit(inits);
     });
 })($, _, Backbone, window["jolira-app"]);

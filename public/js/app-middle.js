@@ -2,8 +2,8 @@
     "use strict";
 
     var LOG = "log",
-        READY = "ready",
         DEVICE = "device",
+        CONNECTED = "connected",
         SECURE = "{{secure}}" == "true",
         PORT = "{{port}}";
 
@@ -22,42 +22,58 @@
         return protocol + location.hostname + port;
     }
 
-    function ready(id, session) {
-        app.middle.trigger(READY, id, session)
-        app.log("ready", id, ression);
+    function ready() {
+        app.middle.trigger(CONNECTED, app.middle.id, app.middle.session)
+        app.log("ready", app.middle.id, app.middle.session);
+    }
+
+    function log(log, _args) {
+        var args = Array.prototype.slice.call(_args),
+            params = [
+                log,
+                app.middle.id,
+                app.middle.session,
+                new Date()
+            ];
+
+
+        app.middle.socket.emit(LOG, app.middle.id, app.middle.session, new Date(), Array.prototype.slice.call(arguments));
     }
 
     app.starter.$(function (next) {
+        var url = getServerURL();
+
+        app.middle.socket = io.connect(url);
+        app.log = function () {
+            app.middle.socket.emit(LOG, app.middle.id, app.middle.session, new Date(), Array.prototype.slice.call(arguments));
+        };
+        app.debug = function () {
+            app.middle.socket.emit("debug", app.middle.id, app.middle.session, new Date(), Array.prototype.slice.call(arguments));
+        };
+        app.error = function () {
+            app.middle.socket.emit("error", app.middle.id, app.middle.session, new Date(), Array.prototype.slice.call(arguments));
+        };
+
         new Lawnchair(function (store) {
             app.middle.store = store;
-
-            var url = getServerURL();
-
-            app.middle.socket = io.connect(url);
-            app.log = function () {
-                app.middle.socket.emit(LOG, id, session, new Date(), Array.prototype.slice.call(arguments));
-            };
-            app.debug = function () {
-                app.middle.socket.emit("debug", id, session, new Date(), Array.prototype.slice.call(arguments));
-            };
-            app.error = function () {
-                app.middle.socket.emit("error", id, session, new Date(), Array.prototype.slice.call(arguments));
-            };
-            app.middle.socket.on(READY, function (props) {
-                store.get(DEVICE, function (device) {
+            store.get(DEVICE, function (device) {
+                app.middle.id = device && device.id;
+                app.middle.socket.on(CONNECTED, function (props) {
+                    app.middle.session = props.session;
                     if (device) {
-                        return ready(device.id, props.session);
+                        return ready();
                     }
 
                     return store.save({
                         key:DEVICE,
                         id:props.session
                     }, function (device) {
-                        return ready(device.id, props.session);
+                        return ready();
                     });
                 });
+
+                return next();
             });
-            return next();
         });
     });
 
@@ -94,9 +110,9 @@
             changed = model.changedAttributes();
 
         socket.emit('jolira-baseline-sync', {
-            url: url,
-            data: data,
-            changed: changed
+            url:url,
+            data:data,
+            changed:changed
         }, function (err, data) {
             if (err) {
                 return options.error(model, err);
