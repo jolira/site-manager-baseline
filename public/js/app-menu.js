@@ -57,15 +57,11 @@
         return false;
     }
 
-    app.menu.add = app.menu.add || function (id, title, cb) {
-        menu.push({
-            id:id,
-            title:title,
-            cb:cb
-        });
-    };
+    var initialized = false;
 
-    app.starter.initializers.push(function (next) {
+    function initialize() {
+        initialized = true;
+
         var isOpen = false,
             MenuButton = Backbone.View.extend({
                 template:app.utils.template("script[id='menu']"),
@@ -93,5 +89,19 @@
 
         $("body > header").append(rendered.el);
         return next();
+    }
+
+    app.starter.$(function (next) {
+        app.menu.add = app.menu.add || function (id, title, cb) {
+            if (initialized) {
+                initialize();
+            }
+
+            menu.push({
+                id:id,
+                title:title,
+                cb:cb
+            });
+        };
     });
 })($, _, Backbone, window["jolira-app"]);

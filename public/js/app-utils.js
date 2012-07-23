@@ -1,5 +1,5 @@
 /*global PhoneGap:false, require:false */
-(function ($, _, Backbone, app) {
+(function ($, _, app) {
     "use strict";
 
     var cache = {};
@@ -40,4 +40,4 @@
         return cache[id] = _.template(html);
     };
 
-})($, _, Backbone, window["jolira-app"]);
+})($, _, window["jolira-app"]);

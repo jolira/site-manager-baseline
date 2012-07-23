@@ -1,9 +1,9 @@
 (function (io, $, _, Backbone, Lawnchair, location, app) {
     "use strict";
 
-    var DEVICE = "device",
+    var LOG = "log",
         READY = "ready",
-        LOG = "log",
+        DEVICE = "device",
         SECURE = "{{secure}}" == "true",
         PORT = "{{port}}";
 
@@ -23,22 +23,26 @@
     }
 
     function ready(id, session) {
-        app.log = app.debug = function () {
-            app.middle.socket.emit(LOG, id, session, new Date(), Array.prototype.slice.call(arguments));
-        };
-        app.error = function () {
-            app.middle.socket.emit("error", id, session, new Date(), Array.prototype.slice.call(arguments));
-        };
-        // app.middle.socket.emit("device", "synchronize", id, session);
         app.middle.trigger(READY, id, session)
+        app.log("ready", id, ression);
     }
 
-    app.starter.initializers.push(function (next) {
+    app.starter.$(function (next) {
         new Lawnchair(function (store) {
+            app.middle.store = store;
+
             var url = getServerURL();
 
-            app.middle.store = store;
             app.middle.socket = io.connect(url);
+            app.log = function () {
+                app.middle.socket.emit(LOG, id, session, new Date(), Array.prototype.slice.call(arguments));
+            };
+            app.debug = function () {
+                app.middle.socket.emit("debug", id, session, new Date(), Array.prototype.slice.call(arguments));
+            };
+            app.error = function () {
+                app.middle.socket.emit("error", id, session, new Date(), Array.prototype.slice.call(arguments));
+            };
             app.middle.socket.on(READY, function (props) {
                 store.get(DEVICE, function (device) {
                     if (device) {

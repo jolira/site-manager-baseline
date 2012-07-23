@@ -1,9 +1,9 @@
-(function ($, _, Backbone, app) {
+(function ($, _, app) {
     "use strict";
 
     app.container = app.container || {};
     app.container.anchor = app.container.anchor || "body";
-    app.starter.initializers.push(function (next) {
+    app.starter.$(function (next) {
         /**
          * Allow users to add their own routable views. When creating view
          * the options are passed to the constructor, which contain the
@@ -16,24 +16,24 @@
          *        to be called. If this method is not passed, app.router.route
          *        is called.
          */
-        app.container.route = function(route, name, creator, router){
-            router = router || app.starter.router.route;
+        app.container.route = function (route, name, creator, router) {
+            router = router || app.starter.route;
 
-            router(route, name, function() {
+            router(route, name, function () {
                 var childSelector = app.container.anchor + ' > *',
                     headerSelector = app.container.anchor + ' > header',
                     $children = $(childSelector),
                     args = Array.prototype.slice.call(arguments);
 
-                if (app.container.currentView) {
-                    if (app.container.currentView.close) {
-                        app.container.currentView.close();
+                if (app.container.current) {
+                    if (app.container.current.close) {
+                        app.container.current.close();
                     }
 
-                    delete app.container.currentView;
+                    delete app.container.current;
                 }
 
-                $children.each(function(idx, child) {
+                $children.each(function (idx, child) {
                     var $child = $(child),
                         name = $child.prop("tagName");
 
@@ -42,14 +42,14 @@
                     }
                 });
 
-                args.push(function(err, view) {
+                args.push(function (err, view) {
                     if (err) {
                         return app.error(err);
                     }
 
                     var rendered = view.render();
 
-                    app.container.currentView = view;
+                    app.container.current = view;
 
                     $(headerSelector).after(rendered.el);
 
@@ -62,6 +62,5 @@
         };
 
         return next();
-        // app.router.navigate("order/0", {trigger:true});
     });
-})($, _, Backbone, window["jolira-app"]);
+})($, _, window["jolira-app"]);
