@@ -11,7 +11,7 @@
         "type":"git"
     },
     "dependencies":{
-        "node-uuid": "*",
+        "mongodb": "*",
         "socket.io": "*",
         "handlebars": "*",
         "site-manager-bootstrap" : "*"

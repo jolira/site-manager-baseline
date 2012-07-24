@@ -20,16 +20,16 @@
                 "js/libs/jquery/jquery-1.7.2.js",
                 "js/libs/backbone/backbone-0.9.2.js",
                 "js/libs/lawnchair/lawnchair-0.6.1.js",
-                "js/libs/lawnchair/indexed-db-0.6.1.js",
                 "js/libs/lawnchair/webkit-sqlite-0.6.1.js",
+                // buggy: "js/libs/lawnchair/indexed-db-0.6.1.js",
                 "js/bootstrap-collapse.js",
                 // local stuff
+                "js/app-utils.js",
                 "js/app-starter.js",
                 "js/app-middle.js",
                 "js/app-backbone.js",
                 "js/app-container.js",
-                "js/app-menu.js",
-                "js/app-utils.js"
+                "js/app-menu.js"
             ].forEach(function (dir) {
                     defaults.trailingScripts.push(dir);
                 });

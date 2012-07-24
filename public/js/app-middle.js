@@ -2,13 +2,133 @@
     "use strict";
 
     var DB = "store:",
-        DEVICE = "device",
+        ID = "id",
         SECURE = "{{secure}}" == "true",
         PORT = "{{port}}";
 
     app.middle = app.middle || {};
+    app.middle.session = app.utils.uuid();
 
     _.extend(app.middle, Backbone.Events);
+
+    // *******************************************************************************
+    // using socket.io for Backbone.sync
+    // *******************************************************************************
+
+    function readAsync(store, segments, options) {
+        var url = segments.join('/');
+
+        return store.get(DB + url, function (result) {
+            return options && options.success && options.success(result && result.val);
+        });
+    }
+
+    function updateLocal(store, model, segments, options, changed, url, data) {
+        changed = changed || model.changedAttributes();
+
+        if (!changed) {
+            return;
+        }
+
+        url = url || segments.join('/');
+        data = data || model.toJSON();
+
+        return store.save({
+            key:DB + url,
+            val:data
+        }, function (result) {
+            app.log("local update", result);
+            return options && options.success && options.success(result);
+        });
+    }
+
+    function updateRemote(socket, model, segments, options, changed, url, data) {
+        changed = changed || model.changedAttributes();
+
+        if (!changed) {
+            return;
+        }
+
+        url = url || segments.join('/');
+        data = data || model.toJSON();
+
+        return socket.emit("store-update", url, data, changed, function (err, result) {
+            if (err) {
+                if (options && options.errror) {
+                    return options.errror(err);
+                }
+
+                return app.error("sync failed", url, data, changed, err);
+            }
+
+            app.log("remote update", result);
+
+            if (options && options.success) {
+                return options.success(result);
+            }
+        });
+    }
+
+    function updateAsync(socket, store, model, segments, options) {
+        var changed = model.changedAttributes();
+
+        if (!changed) {
+            return;
+        }
+
+        var url = segments.join('/'),
+            data = model.toJSON();
+
+        updateRemote(socket, model, segments, {}, changed, url, data);
+        updateLocal(store, model, segments, options, changed, url, data);
+    }
+
+    function asyncSync(socket, store, method, model, segments, options) {
+        if ('read' === method) {
+            return readAsync(store, segments, options);
+        }
+
+        if ("update" === method) {
+            return updateAsync(socket, store, model, segments, options);
+        }
+
+        throw new Error("not yet supported");
+    }
+
+    function sync(socket, store) {
+        return function (method, model, options) {
+            var url = model.url(),
+                segments = url.split('/'),
+                base = segments.shift();
+
+            if (base === 'async') {
+                return asyncSync(socket, store, method, model, segments, options);
+            }
+
+            var data = model.toJSON(),
+                changed = model.changedAttributes();
+
+            socket.emit("store", url, data, changed, function (err, result) {
+                if (err) {
+                    if (options && options.errror) {
+                        return options.errror(err);
+                    }
+
+                    return app.error("sync failed", url, data, changed, err);
+                }
+
+                if (options && options.success) {
+                    return options.success(result);
+                }
+            });
+
+            return undefined;
+        };
+    }
+
+    // *******************************************************************************
+    // Starting connections. loading device id, etc.
+    // *******************************************************************************
 
     function getServerURL() {
         var protocol = SECURE ? "https://" : "http://",
@@ -19,11 +139,6 @@
         }
 
         return protocol + location.hostname + port;
-    }
-
-    function ready() {
-        app.middle.trigger("connected", app.middle.id, app.middle.session)
-        app.log("ready", app.middle.id, app.middle.session);
     }
 
     function convert(arg) {
@@ -43,7 +158,7 @@
         }
     }
 
-    function log(level, _args) {
+    function log(socket, level, _args) {
         var args = Array.prototype.slice.call(_args),
             params = [
                 "log",
@@ -59,164 +174,68 @@
             params.push(param);
         });
 
-        return app.middle.socket.emit.apply(app.middle.socket, params);
+        return socket.emit.apply(socket, params);
+    }
+
+    function emitter(socket) {
+        return function () {
+            return socket.emit.apply(socket, arguments);
+        };
+    }
+
+    function decorate(socket) {
+        return {
+            emit:emitter(socket)
+        };
     }
 
     app.starter.$(function (next) {
-        var url = getServerURL();
+        new Lawnchair({ name: "middle" }, function (store) {
+            store.get(ID, function (device) {
+                app.middle.id = (device && device.id) || app.utils.uuid();
 
-        app.middle.socket = io.connect(url);
-        app.log = function () {
-            return log("info", arguments);
-        };
-        app.debug = function () {
-            return log("debug", arguments);
-        };
-        app.error = function () {
-            return log("error", arguments);
-        };
-
-        new Lawnchair(function (store) {
-            app.middle.store = store;
-            store.get(DEVICE, function (device) {
-                app.middle.id = device && device.id;
-                app.middle.socket.on('ready', function (props) {
-                    app.middle.session = props.session;
-                    if (device) {
-                        return ready();
-                    }
-
-                    return store.save({
-                        key:DEVICE,
-                        id:props.session
-                    }, function (device) {
-                        return ready();
+                if (!device) {
+                    store.save({
+                        key:ID,
+                        id:app.middle.id
                     });
+                }
+
+                var url = getServerURL(),
+                    socket = io.connect(url),
+                    app_log = app.log,
+                    app_debug = app.debug,
+                    app_error = app.error;
+
+                app.middle.emit = emitter(socket);
+
+                var decorated = decorate(socket, store);
+
+                app.middle.sync = sync(decorated);
+
+                socket.on('connect', function (props) {
+                    app.log = function () {
+                        return log(socket, "info", arguments);
+                    };
+                    app.debug = function () {
+                        return log(socket, "debug", arguments);
+                    };
+                    app.error = function () {
+                        return log(socket, "error", arguments);
+                    };
+                    app.middle.trigger("online", app.middle.id, app.middle.session)
+                    app.log("online");
+                });
+                socket.on('disconnect', function (props) {
+                    app.log = app_log;
+                    app.debug = app_debug;
+                    app.error = app_error;
+                    app.middle.trigger("offline", app.middle.id, app.middle.session)
+                    app.log("offline", app.middle.id, app.middle.session);
                 });
 
                 return next();
             });
         });
     });
-
-    // *******************************************************************************
-    // using socket.io for Backbone.sync
-    // *******************************************************************************
-
-    function readAsync(model, segments, options) {
-        var url = segments.join('/');
-
-        return app.middle.store.get(DB + url, function (result) {
-            return options && options.success && options.success(result && result.val);
-        });
-    }
-
-    function updateLocal(model, segments, options, changed, url, data) {
-        changed = changed || model.changedAttributes();
-
-        if (!changed) {
-            return;
-        }
-
-        url = url || segments.join('/');
-        data = data || model.toJSON();
-
-        return app.middle.store.save({
-            key:DB + url,
-            val:data
-        }, function (result) {
-            app.log("local update", result);
-            return options && options.success && options.success(result);
-        });
-    }
-
-    function updateRemote(model, segments, options, changed, url, data) {
-        changed = changed || model.changedAttributes();
-
-        if (!changed) {
-            return;
-        }
-
-        url = url || segments.join('/');
-        data = data || model.toJSON();
-
-        return app.middle.socket.emit("store", url, data, changed, function (err, result) {
-            if (err) {
-                if (options && options.errror) {
-                    return options.errror(err);
-                }
-
-                return app.error("sync failed", url, data, changed, err);
-            }
-
-            app.log("remote update", result);
-
-            if (options && options.success) {
-                return options.success(result);
-            }
-        });
-    }
-
-    function updateAsync(model, segments, options) {
-        var changed = model.changedAttributes();
-
-        if (!changed) {
-            return;
-        }
-
-        var url = segments.join('/'),
-            data = model.toJSON();
-
-        updateRemote(model, segments, {}, changed, url, data);
-        updateLocal(model, segments, options, changed, url, data);
-    }
-
-    function asyncSync(method, model, segments, options) {
-        if ('read' === method) {
-            return readAsync(model, segments, options);
-        }
-
-        if ("update" === method) {
-            return updateAsync(model, segments, options);
-        }
-
-        throw new Error("not yet supported");
-    }
-
-    /**
-     * Performs create, read, update, and delete operations.
-     *
-     * @param method create, read, update, and delete
-     * @param model
-     * @param options
-     * @return {*}
-     */
-    Backbone.sync = function (method, model, options) {
-        var url = model.url(),
-            segments = url.split('/'),
-            base = segments.shift();
-
-        if (base === 'async') {
-            return asyncSync(method, model, segments, options);
-        }
-
-        var data = model.toJSON(),
-            changed = model.changedAttributes();
-
-        app.middle.socket.emit("store", url, data, changed, function (err, result) {
-            if (err) {
-                if (options && options.errror) {
-                    return options.errror(err);
-                }
-
-                return app.error("sync failed", url, data, changed, err);
-            }
-
-            if (options && options.success) {
-                return options.success(result);
-            }
-        });
-
-        return undefined;
-    };
 })(window, io, $, _, Backbone, Lawnchair, window.location, window["jolira-app"]);
