@@ -103,18 +103,6 @@
     // using socket.io for Backbone.sync
     // *******************************************************************************
 
-    // Helper function to get a value from a Backbone object as a property
-    // or as a function.
-    function getValue(object, prop) {
-        var value = object && object[prop];
-
-        if (!value) {
-            return undefined;
-        }
-
-        return _.isFunction(value) ? value() : value;
-    }
-
     function readAsync(model, segments, options) {
         var url = segments.join('/');
 
