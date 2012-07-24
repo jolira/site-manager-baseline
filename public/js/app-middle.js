@@ -1,7 +1,8 @@
 (function (window, io, $, _, Backbone, Lawnchair, location, app) {
     "use strict";
 
-    var DEVICE = "device",
+    var DB = "store:",
+        DEVICE = "device",
         SECURE = "{{secure}}" == "true",
         PORT = "{{port}}";
 
@@ -117,14 +118,78 @@
     function readAsync(model, segments, options) {
         var url = segments.join('/');
 
-        return app.middle.store.get(url, function(result) {
+        return app.middle.store.get(DB + url, function (result) {
+            return options && options.success && options.success(result && result.val);
+        });
+    }
+
+    function updateLocal(model, segments, options, changed, url, data) {
+        changed = changed || model.changedAttributes();
+
+        if (!changed) {
+            return;
+        }
+
+        url = url || segments.join('/');
+        data = data || model.toJSON();
+
+        return app.middle.store.save({
+            key:DB + url,
+            val:data
+        }, function (result) {
+            app.log("local update", result);
             return options && options.success && options.success(result);
         });
     }
 
+    function updateRemote(model, segments, options, changed, url, data) {
+        changed = changed || model.changedAttributes();
+
+        if (!changed) {
+            return;
+        }
+
+        url = url || segments.join('/');
+        data = data || model.toJSON();
+
+        return app.middle.socket.emit("store", url, data, changed, function (err, result) {
+            if (err) {
+                if (options && options.errror) {
+                    return options.errror(err);
+                }
+
+                return app.error("sync failed", url, data, changed, err);
+            }
+
+            app.log("remote update", result);
+
+            if (options && options.success) {
+                return options.success(result);
+            }
+        });
+    }
+
+    function updateAsync(model, segments, options) {
+        var changed = model.changedAttributes();
+
+        if (!changed) {
+            return;
+        }
+
+        var url = segments.join('/'),
+            data = model.toJSON();
+
+        updateRemote(model, segments, {}, changed, url, data);
+        updateLocal(model, segments, options, changed, url, data);
+    }
+
     function asyncSync(method, model, segments, options) {
-        if (method === 'read') {
+        if ('read' === method) {
             return readAsync(model, segments, options);
+        }
+
+        if ("update" === method) {
+            return updateAsync(model, segments, options);
         }
 
         throw new Error("not yet supported");
@@ -150,7 +215,7 @@
         var data = model.toJSON(),
             changed = model.changedAttributes();
 
-        app.middle.socket.emit("store", url, data, changed, function(err, result) {
+        app.middle.socket.emit("store", url, data, changed, function (err, result) {
             if (err) {
                 if (options && options.errror) {
                     return options.errror(err);
