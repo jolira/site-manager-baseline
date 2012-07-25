@@ -26,7 +26,7 @@
         });
     }
 
-    function updateLocal(model, collection, id, options, changed, data) {
+    function saveLocal(model, collection, id, options, changed, data) {
         changed = changed || model.changedAttributes();
 
         if (!changed) {
@@ -40,13 +40,13 @@
                 key:id,
                 val:data
             }, function (result) {
-                app.log("local update", result);
-                return options && options.success && options.success(result);
+                app.log("local update", collection, result, changed);
+                return options && options.success && options.success(result.val);
             });
         });
     }
 
-    function updateRemote(socket, model, collection, id, options, changed, data) {
+    function saveRemote(method, model, collection, id, options, changed, data) {
         changed = changed || model.changedAttributes();
 
         if (!changed) {
@@ -55,7 +55,7 @@
 
         data = data || model.toJSON();
 
-        return socket.emit("store-update", id, data, changed, function (err, result) {
+        return app.middle.emit("middle-store", method, app.middle.auth, id, data, changed, function (err, result) {
             if (err) {
                 if (options && options.errror) {
                     return options.errror(err);
@@ -72,7 +72,7 @@
         });
     }
 
-    function updateAsync(socket, model, collection, id, options) {
+    function saveAsync(method, model, collection, id, options) {
         var changed = model.changedAttributes();
 
         if (!changed) {
@@ -81,37 +81,35 @@
 
         var data = model.toJSON();
 
-        updateRemote(socket, model, collection, id, undefined, changed, data);
-        updateLocal(model, collection, id, options, changed, data);
+        saveRemote(method, model, collection, id, undefined, changed, data);
+        saveLocal(model, collection, id, options, changed, data);
     }
 
-    function asyncSync(socket, method, model, collection, id, options) {
+    function asyncSync(method, model, collection, id, options) {
         if ('read' === method) {
             return readAsync(collection, id, options);
         }
 
-        if ("update" === method) {
-            return updateAsync(socket, model, collection, id, options);
+        if ("update" === method || "create" === method) {
+            return saveAsync(method, model, collection, id, options);
         }
 
         throw new Error("not yet supported");
     }
 
-    function sync(socket) {
-        return function (method, model, options) {
-            var url = model.url(),
-                segments = url.split('/'),
-                type = segments.shift(),
-                collection = segments.shift(),
-                id = segments.join('/');
+    app.middle.sync = function (method, model, options) {
+        var url = model.url(),
+            segments = url.split('/'),
+            type = segments.shift(),
+            collection = segments.shift(),
+            id = segments.join('/');
 
-            if (type === 'async') {
-                return asyncSync(socket, method, model, collection, id, options);
-            }
+        if (type === 'async') {
+            return asyncSync(method, model, collection, id, options);
+        }
 
-            throw new Error("unsupported url " + url);
-        };
-    }
+        throw new Error("unsupported url " + url);
+    };
 
     // *******************************************************************************
     // Starting connections. loading device id, etc.
@@ -166,7 +164,17 @@
 
     function emitter(socket) {
         return function () {
-            return socket.emit.apply(socket, arguments);
+            var args = Array.prototype.slice.call(arguments, 1),
+                topic = arguments[0];
+
+            args.unshift(topic, {
+                id: app.middle.id,
+                session: app.middle.session,
+                auth: app.middle.auth
+
+            });
+
+            return socket.emit.apply(socket, args);
         };
     }
 
@@ -197,8 +205,6 @@
                 app.middle.emit = emitter(socket);
 
                 var decorated = decorate(socket, store);
-
-                app.middle.sync = sync(decorated);
 
                 socket.on('connect', function (props) {
                     app.log = function () {
