@@ -1,10 +1,13 @@
-(function ($, _, app) {
+(function ($, _, Backbone, app) {
     "use strict";
 
+    var Placeholder = Backbone.View.extend({
+        el: "#sm-container"
+    });
+
     app.container = app.container || {};
-    app.container.anchor = app.container.anchor || "body";
     app.starter.$(function (next) {
-        var current;
+        var current = new Placeholder();
 
         /**
          * Allow users to add their own routable views. When creating view
@@ -22,38 +25,26 @@
             router = router || app.backbone.route;
 
             router(route, name, function () {
-                var childSelector = app.container.anchor + ' > *',
+                var childSelector = app.container.anchor + ' > *[data-sm-container-managed]',
                     headerSelector = app.container.anchor + ' > header',
                     $children = $(childSelector),
                     args = Array.prototype.slice.call(arguments);
 
-                if (current) {
-                    if (current.close) {
-                        current.close();
-                    }
-
-                    current = undefined;
+                if (current.close) {
+                    current.close();
                 }
-
-                $children.each(function (idx, child) {
-                    var $child = $(child),
-                        name = $child.prop("tagName");
-
-                    if ('HEADER' !== name && 'FOOTER' !== name && 'SCRIPT' !== name) {
-                        $child.remove();
-                    }
-                });
 
                 args.push(function (err, view) {
                     if (err) {
                         return app.error(err);
                     }
 
-                    var rendered = view.render();
+                    var existing = current,
+                        rendered = view.render();
 
                     current = view;
 
-                    $(headerSelector).after(rendered.el);
+                    existing.$el.replaceWith(rendered.el);
 
                 });
 
@@ -65,4 +56,4 @@
 
         return next();
     });
-})($, _, window["jolira-app"]);
+})($, _, Backbone, window["jolira-app"]);
