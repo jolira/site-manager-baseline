@@ -9,6 +9,11 @@
     app.starter.$(function (next) {
         var current = new Placeholder();
 
+        // read access only
+        app.container.__defineGetter__("current", function(){
+            return current;
+        });
+
         /**
          * Allow users to add their own routable views. When creating view
          * the options are passed to the constructor, which contain the
