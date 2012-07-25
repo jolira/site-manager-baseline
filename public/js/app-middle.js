@@ -102,8 +102,12 @@
         throw new Error("not yet supported");
     }
 
+    function getURL(model) {
+        return _.isFunction(model.url) ? model.url.call(model) : model.url;
+    }
+
     app.middle.sync = function (method, model, options) {
-        var url = model.url(),
+        var url = getURL(model),
             segments = url.split('/'),
             type = segments.shift(),
             collection = segments.shift(),
