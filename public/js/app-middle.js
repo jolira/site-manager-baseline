@@ -6,7 +6,6 @@
         PORT = "{{port}}";
 
     app.middle = app.middle || {};
-    app.middle.session = app.utils.uuid();
 
     _.extend(app.middle, Backbone.Events);
 
@@ -148,8 +147,6 @@
             params = [
                 "log",
                 level,
-                app.middle.id,
-                app.middle.session,
                 new Date()
             ];
 
@@ -164,17 +161,7 @@
 
     function emitter(socket) {
         return function () {
-            var args = Array.prototype.slice.call(arguments, 1),
-                topic = arguments[0];
-
-            args.unshift(topic, {
-                id: app.middle.id,
-                session: app.middle.session,
-                auth: app.middle.auth
-
-            });
-
-            return socket.emit.apply(socket, args);
+            return socket.emit.apply(socket, arguments);
         };
     }
 
@@ -207,6 +194,8 @@
                 var decorated = decorate(socket, store);
 
                 socket.on('connect', function (props) {
+                    socket.emit("middle-initialize", app.middle.id);
+
                     app.log = function () {
                         return log(socket, "info", arguments);
                     };
@@ -216,19 +205,19 @@
                     app.error = function () {
                         return log(socket, "error", arguments);
                     };
-                    app.middle.trigger("online", app.middle.id, app.middle.session)
+                    app.middle.trigger("online", app.middle.id)
                     app.log("online");
                 });
                 socket.on('disconnect', function (props) {
                     app.log = app_log;
                     app.debug = app_debug;
                     app.error = app_error;
-                    app.middle.trigger("offline", app.middle.id, app.middle.session)
-                    app.log("offline", app.middle.id, app.middle.session);
+                    app.middle.trigger("offline", app.middle.id)
+                    app.log("offline", app.middle.id);
                 });
 
                 return next();
             });
         });
     });
-})(window, io, $, _, Backbone, Lawnchair, window.location, window["jolira-app"]);
+})(window, window.io, $, _, Backbone, Lawnchair, window.location, window["jolira-app"]);

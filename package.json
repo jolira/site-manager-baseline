@@ -14,7 +14,8 @@
         "mongodb": "*",
         "socket.io": "*",
         "handlebars": "*",
-        "site-manager-bootstrap" : "*"
+        "site-manager-bootstrap" : "*",
+        "socket.io-mongo": "*"
     },
     "devDependencies":{
         "site-manager":"*",
