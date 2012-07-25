@@ -209,10 +209,10 @@
                     app.error("connect_failed", err);
                 });
                 socket.on('reconnect', function () {
-                    app.error("reconnect");
+                    app.log("reconnect");
                 });
                 socket.on('reconnecting', function (err) {
-                    app.error("reconnecting");
+                    app.log("reconnecting");
                 });
                 socket.on('connect', function (props) {
                     app.middle.connected = true;
