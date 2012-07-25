@@ -199,7 +199,24 @@
 
                 var decorated = decorate(socket, store);
 
+                socket.on('error', function (err) {
+                    app.error("socket error", err);
+                });
+                socket.on('connecting', function () {
+                    app.log("connecting");
+                });
+                socket.on('connect_failed', function (err) {
+                    app.error("connect_failed", err);
+                });
+                socket.on('reconnect', function () {
+                    app.error("reconnect");
+                });
+                socket.on('reconnecting', function (err) {
+                    app.error("reconnecting");
+                });
                 socket.on('connect', function (props) {
+                    app.middle.connected = true;
+
                     socket.emit("middle-initialize", app.middle.id);
 
                     app.log = function () {
@@ -211,15 +228,17 @@
                     app.error = function () {
                         return log(socket, "error", arguments);
                     };
-                    app.middle.trigger("online", app.middle.id)
-                    app.log("online");
+                    app.middle.trigger("connect", app.middle.id)
+                    app.log("connected");
                 });
                 socket.on('disconnect', function (props) {
+                    app.middle.connected = false;
+
                     app.log = app_log;
                     app.debug = app_debug;
                     app.error = app_error;
-                    app.middle.trigger("offline", app.middle.id)
-                    app.log("offline", app.middle.id);
+                    app.middle.trigger("disconnect", app.middle.id)
+                    app.log("disconnected", app.middle.id);
                 });
 
                 return next();
