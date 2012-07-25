@@ -17,6 +17,12 @@
         new Lawnchair({ name: name }, cb);
     }
 
+    function changedAttributes(model) {
+        var changed = model.changedAttributes()
+
+        return Object.keys(changed);
+    }
+
     function readAsync(collection, id, options) {
         return open(collection, function(store) {
             return store.get(id, function (result) {
@@ -26,7 +32,7 @@
     }
 
     function saveLocal(model, collection, id, options, changed, data) {
-        changed = changed || model.changedAttributes();
+        changed = changed || changedAttributes(model);
 
         if (!changed) {
             return;
@@ -39,14 +45,14 @@
                 key:id,
                 val:data
             }, function (result) {
-                app.log("local update", collection, result, changed);
+                app.log("saving locally", collection, result, changed);
                 return options && options.success && options.success(result.val);
             });
         });
     }
 
     function saveRemote(method, model, collection, id, options, changed, data) {
-        changed = changed || model.changedAttributes();
+        changed = changed || changedAttributes(model);
 
         if (!changed) {
             return;
@@ -54,7 +60,7 @@
 
         data = data || model.toJSON();
 
-        return app.middle.emit("middle-store", method, app.middle.auth, id, data, changed, function (err, result) {
+        return app.middle.emit("middle-store", method, collection, id, data, changed, function (err, result) {
             if (err) {
                 if (options && options.errror) {
                     return options.errror(err);
@@ -72,7 +78,7 @@
     }
 
     function saveAsync(method, model, collection, id, options) {
-        var changed = model.changedAttributes();
+        var changed = changedAttributes(model);
 
         if (!changed) {
             return;
