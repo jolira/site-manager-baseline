@@ -1,11 +1,16 @@
 body {
-    margin: 0;
-    position: relative;
+    margin:       0;
+    position:     relative;
     margin-right: auto;
-    margin-left: auto;
+    margin-left:  auto;
+
+    .disconnected {
+        background-color: red !important;
+        background-image: -webkit-linear-gradient(top, yellow, red) !important;
+    }
 
     #workspace {
-        width: 100%;
+        width:  100%;
         height: 100%;
 
         a[href] {

@@ -57,14 +57,17 @@
         return false;
     }
 
-    var initialized = false;
-
-    function initialize() {
+    function initButton() {
         var isOpen = false,
             MenuButton = Backbone.View.extend({
                 template:app.utils.template("script[id='menu']"),
                 render:function () {
-                    $(this.el).addClass("menu-btn dropdown-toggle").html(this.template({}));
+                    this.$el.addClass("menu-btn dropdown-toggle").html(this.template({}));
+
+                    if (!app.menu.connected) {
+                        this.$el.addClass("disconnected");
+                    }
+
                     return this;
                 },
                 events:{
@@ -78,22 +81,29 @@
                     return open(this);
                 }
             }),
-            button = new MenuButton(),
-            rendered = button.render();
+            button = new MenuButton();
 
+        app.middle.on("connect", function() {
+            button.$el.removeClass("disconnected");
+        });
+        app.middle.on("disconnect",  function() {
+            button.$el.addClass("disconnected");
+        });
         $('html').on('click', function () {
             close(button);
         });
 
-        $("body > header").append(rendered.el);
+        $("body > header").append(button.render().el);
 
-        initialized = true;
+        return button;
     }
 
     app.starter.$(function (next) {
+        var button;
+
         app.menu.add = app.menu.add || function (id, title, cb) {
-            if (!initialized) {
-                initialize();
+            if (!button) {
+                button = initButton();
             }
 
             menu.push({
