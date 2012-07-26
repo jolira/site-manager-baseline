@@ -20,13 +20,29 @@
     function changedAttributes(model) {
         var changed = model.changedAttributes()
 
-        return Object.keys(changed);
+        return changed && _.keys(changed);
     }
 
     function readAsync(collection, id, options) {
         return open(collection, function(store) {
-            return store.get(id, function (result) {
-                return options && options.success && options.success(result && result.val);
+            if (id) {
+                return store.get(id, function (result) {
+                    return options && options.success && options.success(result && result.val);
+                });
+            }
+
+            return store.all(function (result) {
+                if (!options || !options.success) {
+                    return;
+                }
+
+                var found = [];
+
+                _.each(result || [], function(result) {
+                    found.push(result.val);
+                });
+
+                return options.success(found);
             });
         });
     }
@@ -77,17 +93,25 @@
         });
     }
 
-    function saveAsync(method, model, collection, id, options) {
-        var changed = changedAttributes(model);
+    function saveAsync(method, model, collection, id, options, changed, data) {
+        changed = changed || changedAttributes(model);
 
         if (!changed) {
             return;
         }
 
-        var data = model.toJSON();
+        data = data || model.toJSON();
 
         saveRemote(method, model, collection, id, undefined, changed, data);
         saveLocal(model, collection, id, options, changed, data);
+    }
+
+    function createAsync(method, model, collection, id, options) {
+        var data = model.toJSON() || {};
+
+        data.id = app.utils.uuid();
+
+        saveAsync(method, model, collection, data.id, options, _.keys(data), data);
     }
 
     function asyncSync(method, model, collection, id, options) {
@@ -95,10 +119,13 @@
             return readAsync(collection, id, options);
         }
 
-        if ("update" === method || "create" === method) {
+        if ("update" === method) {
             return saveAsync(method, model, collection, id, options);
         }
 
+        if ("create" === method) {
+            return createAsync(method, model, collection, id, options);
+        }
         throw new Error("not yet supported");
     }
 
@@ -160,7 +187,7 @@
                 new Date()
             ];
 
-        args.forEach(function (arg) {
+        _.each(args, function (arg) {
             var param = convert(arg);
 
             params.push(param);
