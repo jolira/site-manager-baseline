@@ -221,7 +221,10 @@
                 }
 
                 var url = getServerURL(),
-                    socket = io.connect(url),
+                    socket = io.connect(url, {
+                        "reconnection limit": 4001, // four second max delay
+                        "max reconnection attempts": Infinity
+                    }),
                     app_log = app.log,
                     app_debug = app.debug,
                     app_error = app.error;
