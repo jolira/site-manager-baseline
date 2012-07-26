@@ -19,7 +19,7 @@
             "js/libs/jquery/jquery-1.7.2.js",
             "js/libs/backbone/backbone-0.9.2.js",
             "js/libs/lawnchair/lawnchair-0.6.1.js",
-            "js/libs/lawnchair/webkit-sqlite-0.6.1.js",
+            // "js/libs/lawnchair/webkit-sqlite-0.6.1.js",
             // buggy: "js/libs/lawnchair/indexed-db-0.6.1.js",
             "js/bootstrap-collapse.js",
             // local stuff
