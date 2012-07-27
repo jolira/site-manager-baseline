@@ -109,7 +109,7 @@
     function createAsync(method, model, collection, id, options) {
         var data = model.toJSON() || {};
 
-        data.id = app.utils.uuid();
+        data.id = app.utils.uuid().replace(/-/g, "");
 
         saveAsync(method, model, collection, data.id, options, _.keys(data), data);
     }
