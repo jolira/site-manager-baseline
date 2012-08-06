@@ -39,5 +39,4 @@
 
         return cache[id] = _.template(html);
     };
-
 })($, _, window["jolira-app"]);
