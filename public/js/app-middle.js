@@ -3,18 +3,18 @@
 
     var ID = "id",
         SECURE = "{{secure}}" == "true",
-        PORT = "{{port}}";
+        PORT = "{{port}}",
+        watchedEvents = {},
+        socket;
 
     app.middle = app.middle || {};
-
-    _.extend(app.middle, Backbone.Events);
 
     // *******************************************************************************
     // using socket.io for Backbone.sync
     // *******************************************************************************
 
     function open(name, cb) {
-        new Lawnchair({ name: name }, cb);
+        new Lawnchair({ name:name }, cb);
     }
 
     function changedAttributes(model) {
@@ -24,7 +24,7 @@
     }
 
     function readAsync(collection, id, options) {
-        return open(collection, function(store) {
+        return open(collection, function (store) {
             if (id) {
                 return store.get(id, function (result) {
                     return options && options.success && options.success(result && result.val);
@@ -38,7 +38,7 @@
 
                 var found = [];
 
-                _.each(result || [], function(result) {
+                _.each(result || [], function (result) {
                     found.push(result.val);
                 });
 
@@ -54,7 +54,7 @@
             return;
         }
 
-        return open(collection, function(store) {
+        return open(collection, function (store) {
             data = data || model.toJSON();
 
             return store.save({
@@ -209,7 +209,7 @@
     }
 
     app.starter.$(function (next) {
-        new Lawnchair({ name: "middle" }, function (store) {
+        new Lawnchair({ name:"middle" }, function (store) {
             store.get(ID, function (device) {
                 app.middle.id = (device && device.id) || app.utils.uuid();
 
@@ -221,32 +221,57 @@
                 }
 
                 var url = getServerURL(),
-                    socket = io.connect(url, {
-                        "reconnection limit": 4001, // four second max delay
-                        "max reconnection attempts": Infinity
-                    }),
                     app_log = app.log,
                     app_debug = app.debug,
                     app_error = app.error;
 
+                socket = io.connect(url, {
+                    "reconnection limit":4001, // four second max delay
+                    "max reconnection attempts":Infinity
+                });
+
+                app.middle.bind = app.middle.on = app.middle.on || function (event, callback, context) {
+                    var events = event.split(/\s+/);
+
+                    _.each(events, function (event) {
+                        if (!watchedEvents[event]) {
+                            watchedEvents[event] = true;
+                            socket.on(event, function () {
+                                var args = Array.prototype.slice.call(arguments);
+
+                                args.unshift(event);
+
+                                return app.middle.trigger.apply(app.middle, args);
+                            });
+                        }
+                    });
+
+                    Backbone.Events.on.call(app.middle, event, callback, context);
+                }
+                app.middle.unbind = app.middle.off = app.middle.off || function () {
+                    Backbone.Events.off.apply(app.middle, arguments);
+                }
+                app.middle.trigger = app.middle.trigger = app.middle.trigger || function () {
+                    Backbone.Events.trigger.apply(app.middle, arguments);
+                }
                 app.middle.emit = emitter(socket);
 
                 var decorated = decorate(socket, store);
 
                 socket.on('error', function (err) {
-                    app.error("socket error", err);
+                    return app.error("socket error", err);
                 });
                 socket.on('connecting', function () {
-                    app.log("connecting");
+                    return app.log("connecting");
                 });
                 socket.on('connect_failed', function (err) {
-                    app.error("connect_failed", err);
+                    return app.error("connect_failed", err);
                 });
                 socket.on('reconnect', function () {
-                    app.log("reconnect");
+                    return app.log("reconnect");
                 });
                 socket.on('reconnecting', function (err) {
-                    app.log("reconnecting");
+                    return app.log("reconnecting");
                 });
                 socket.on('connect', function (props) {
                     app.middle.connected = true;
@@ -263,7 +288,8 @@
                         return log(socket, "error", arguments);
                     };
                     app.middle.trigger("connect", app.middle.id)
-                    app.log("connected");
+
+                    return app.log("connected");
                 });
                 socket.on('disconnect', function (props) {
                     app.middle.connected = false;
@@ -272,7 +298,8 @@
                     app.debug = app_debug;
                     app.error = app_error;
                     app.middle.trigger("disconnect", app.middle.id)
-                    app.log("disconnected", app.middle.id);
+
+                    return app.log("disconnected", app.middle.id);
                 });
 
                 return next();
