@@ -1,6 +1,6 @@
 {
     "name":"site-manager-baseline",
-    "version":"0.2.0",
+    "version":"0.3.0",
     "description":"Client-side UI for the Site-Manager applications",
     "keywords":["site", "html5", "mobile"],
     "contributors": [
@@ -11,11 +11,9 @@
         "type":"git"
     },
     "dependencies":{
-        "mongodb": "*",
         "socket.io": "*",
         "handlebars": "*",
-        "site-manager-bootstrap" : "*",
-        "socket.io-mongo": "*"
+        "site-manager-bootstrap" : "*"
     },
     "devDependencies":{
         "site-manager":"*",

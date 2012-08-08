@@ -6,7 +6,6 @@
         bootstrap = require("site-manager-bootstrap"),
         templates = path.join(__dirname, "templates"),
         pubdir = path.join(__dirname, "public"),
-        store = require("./lib/store"),
         clientInit = require("./lib/client-init"),
         clientLogger = require("./lib/client-logger"),
         dispatcher = require("./lib/dispatcher");
@@ -81,16 +80,9 @@
         dispatcher(defaults, app, lopts, gopts, function (err, dispatcher) {
             dispatcher.on(clientLogger(app.logger));
             dispatcher.on(clientInit(app.logger));
+            addDefaults(defaults);
 
-            store(app.logger, lopts, gopts, function(err, topics){
-                if (err) {
-                    return cb(err);
-                }
-
-                dispatcher.on(topics);
-                addDefaults(defaults);
-                return cb(undefined, defaults, dispatcher);
-            });
+            return cb(undefined, defaults, dispatcher);
         });
     };
 })(module);
