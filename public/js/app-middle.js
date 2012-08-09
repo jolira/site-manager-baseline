@@ -1,4 +1,4 @@
-(function (window, io, $, _, Backbone, Lawnchair, location, app) {
+(function (window, io, $, _, Backbone, location, app) {
     "use strict";
 
     var ID = "id",
@@ -8,148 +8,6 @@
         socket;
 
     app.middle = app.middle || {};
-
-    // *******************************************************************************
-    // using socket.io for Backbone.sync
-    // *******************************************************************************
-
-    function open(name, cb) {
-        new Lawnchair({ name:name }, cb);
-    }
-
-    function changedAttributes(model) {
-        var changed = model.changedAttributes()
-
-        return changed && _.keys(changed);
-    }
-
-    function readAsync(collection, id, options) {
-        return open(collection, function (store) {
-            if (id) {
-                return store.get(id, function (result) {
-                    return options && options.success && options.success(result && result.val);
-                });
-            }
-
-            return store.all(function (result) {
-                if (!options || !options.success) {
-                    return;
-                }
-
-                var found = [];
-
-                _.each(result || [], function (result) {
-                    found.push(result.val);
-                });
-
-                return options.success(found);
-            });
-        });
-    }
-
-    function saveLocal(model, collection, id, options, changed, data) {
-        changed = changed || changedAttributes(model);
-
-        if (!changed) {
-            return;
-        }
-
-        return open(collection, function (store) {
-            data = data || model.toJSON();
-
-            return store.save({
-                key:id,
-                val:data
-            }, function (result) {
-                app.log("saving locally", collection, result, changed);
-                return options && options.success && options.success(result.val);
-            });
-        });
-    }
-
-    function saveRemote(method, model, collection, id, options, changed, data) {
-        changed = changed || changedAttributes(model);
-
-        if (!changed) {
-            return;
-        }
-
-        data = data || model.toJSON();
-
-        return app.middle.emit("middle-store", method, collection, id, data, changed, function (err, result) {
-            if (err) {
-                if (options && options.errror) {
-                    return options.errror(err);
-                }
-
-                return app.error("sync failed", collection, id, data, changed, err);
-            }
-
-            app.log("remote update", result);
-
-            if (options && options.success) {
-                return options.success(result);
-            }
-        });
-    }
-
-    function saveAsync(method, model, collection, id, options, changed, data) {
-        changed = changed || changedAttributes(model);
-
-        if (!changed) {
-            return;
-        }
-
-        data = data || model.toJSON();
-
-        saveRemote(method, model, collection, id, undefined, changed, data);
-        saveLocal(model, collection, id, options, changed, data);
-    }
-
-    function createAsync(method, model, collection, id, options) {
-        var data = model.toJSON() || {};
-
-        data.id = app.utils.uuid().replace(/-/g, "");
-
-        saveAsync(method, model, collection, data.id, options, _.keys(data), data);
-    }
-
-    function asyncSync(method, model, collection, id, options) {
-        if ('read' === method) {
-            return readAsync(collection, id, options);
-        }
-
-        if ("update" === method) {
-            return saveAsync(method, model, collection, id, options);
-        }
-
-        if ("create" === method) {
-            return createAsync(method, model, collection, id, options);
-        }
-        throw new Error("not yet supported");
-    }
-
-    function getURL(model) {
-        return _.isFunction(model.url) ? model.url.call(model) : model.url;
-    }
-
-    app.middle.sync = function (method, model, options) {
-        var url = getURL(model),
-            segments = url.split('/'),
-            type = segments.shift(),
-            collection = segments.shift(),
-            id = segments.join('/');
-
-        if (type === 'async') {
-            return asyncSync(method, model, collection, id, options);
-        }
-
-        throw new Error("unsupported url " + url);
-    };
-
-    // *******************************************************************************
-    // Starting connections. loading device id, etc.
-    // *******************************************************************************
 
     function getServerURL() {
         var protocol = SECURE ? "https://" : "http://",
@@ -209,15 +67,12 @@
     }
 
     app.starter.$(function (next) {
-        new Lawnchair({ name:"middle" }, function (store) {
+        app.store("middle", function (store) {
             store.get(ID, function (device) {
                 app.middle.id = (device && device.id) || app.utils.uuid();
 
                 if (!device) {
-                    store.save({
-                        key:ID,
-                        id:app.middle.id
-                    });
+                    store.save(ID, app.middle.id);
                 }
 
                 var url = getServerURL(),
@@ -306,4 +161,4 @@
             });
         });
     });
-})(window, window.io, $, _, Backbone, Lawnchair, window.location, window["jolira-app"]);
+})(window, window.io, $, _, Backbone, window.location, window["jolira-app"]);
