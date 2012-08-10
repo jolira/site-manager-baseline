@@ -1,16 +1,43 @@
 (function (localStorage, app) {
     "use strict";
 
-    app.store = function(dbname, cb) {
+    function parse(value) {
+        try {
+            return JSON.parse(value);
+        }
+        catch(e) {
+            app.log("app-store parse", value, err);
+            return undefined;
+        }
+    }
+
+    function stringify(value) {
+        try {
+            return JSON.stringify(value);
+        }
+        catch(e) {
+            app.log("app-store stringify", value, err);
+            return undefined;
+        }
+    }
+
+    app.store = app.store || function(dbname, cb) {
         return cb({
             get: function(key, cb) {
-                return cb(localStorage.getItem(dbname + "::" + key));
+                var value = localStorage.getItem(dbname + "::" + key);
+
+                return cb(parse(value));
             },
             save: function(key, value, cb) {
-                localStorage.setItem(dbname + "::" + key, value)
+                localStorage.setItem(dbname + "::" + key, stringify(value))
+
+                return cb && cb();
+            },
+            remove: function(key, value, cb) {
+                localStorage.removeItem(dbname + "::" + key)
 
                 return cb && cb();
             }
         });
-    } || {};
+    };
 })(window.localStorage, window["jolira-app"]);
