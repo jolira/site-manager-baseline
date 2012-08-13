@@ -33,7 +33,7 @@
 
                 return cb && cb();
             },
-            remove: function(key, value, cb) {
+            remove: function(key, cb) {
                 localStorage.removeItem(dbname + "::" + key)
 
                 return cb && cb();
