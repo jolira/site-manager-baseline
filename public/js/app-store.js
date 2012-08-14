@@ -6,7 +6,7 @@
             return JSON.parse(value);
         }
         catch(e) {
-            app.log("app-store parse", value, err);
+            app.log("app-store parse", value, e);
             return undefined;
         }
     }
