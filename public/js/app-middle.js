@@ -102,13 +102,13 @@
                     });
 
                     Backbone.Events.on.call(app.middle, event, callback, context);
-                }
+                };
                 app.middle.unbind = app.middle.off = app.middle.off || function () {
                     Backbone.Events.off.apply(app.middle, arguments);
-                }
+                };
                 app.middle.trigger = app.middle.trigger = app.middle.trigger || function () {
                     Backbone.Events.trigger.apply(app.middle, arguments);
-                }
+                };
                 app.middle.emit = emitter(socket);
 
                 var decorated = decorate(socket, store);
