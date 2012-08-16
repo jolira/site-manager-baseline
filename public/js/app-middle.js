@@ -142,7 +142,6 @@
                     app.error = function () {
                         return log(socket, "error", arguments);
                     };
-                    app.middle.trigger("connect", app.middle.id)
 
                     return app.log("connected");
                 });
