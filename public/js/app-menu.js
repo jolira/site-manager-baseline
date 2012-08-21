@@ -64,7 +64,7 @@
                 render:function () {
                     this.$el.addClass("menu-btn dropdown-toggle").html(this.template({}));
 
-                    if (!app.menu.connected) {
+                    if (!app.middle.connected) {
                         this.$el.addClass("disconnected");
                     }
 

@@ -59,8 +59,16 @@
         };
     }
 
-    function connect(next) {
-        var url = getServerURL(),
+    function connect(cb) {
+        var tryAgain = function() {
+                if (cb) {
+                    app.log("middle trying to connect again", err);
+                    setTimeout(function() {
+                        connect(cb);
+                    }, 500);
+                }
+            },
+            url = getServerURL(),
             app_log = app.log,
             app_debug = app.debug,
             app_error = app.error,
@@ -69,53 +77,29 @@
                 "max reconnection attempts":Infinity
             })
 
-        app.middle.bind = app.middle.on = app.middle.on || function (event, callback, context) {
-            var events = event.split(/\s+/);
-
-            _.each(events, function (event) {
-                if (!watchedEvents[event]) {
-                    watchedEvents[event] = true;
-                    socket.on(event, function () {
-                        var args = Array.prototype.slice.call(arguments);
-
-                        args.unshift(event);
-
-                        return app.middle.trigger.apply(app.middle, args);
-                    });
-                }
-            });
-
-            Backbone.Events.on.call(app.middle, event, callback, context);
-        };
-        app.middle.unbind = app.middle.off = app.middle.off || function () {
-            Backbone.Events.off.apply(app.middle, arguments);
-        };
-        app.middle.trigger = app.middle.trigger = app.middle.trigger || function () {
-            Backbone.Events.trigger.apply(app.middle, arguments);
-        };
-        app.middle.emit = emitter(socket);
-
         socket.on('error', function (err) {
-            app.error("socket error", err);
-
-            setTimeout(function() {
-                connect();
-            }, 500);
+            app.error("middle socket error", err);
+            tryAgain();
         });
         socket.on('connecting', function () {
-            return app.log("connecting");
+            return app.log("middle connecting");
         });
         socket.on('connect_failed', function (err) {
-            return app.error("connect_failed", err);
+            app.error("connect_failed", err);
+            tryAgain();
         });
         socket.on('reconnect', function () {
-            return app.log("reconnect");
+            return app.log("middle reconnect");
         });
         socket.on('reconnecting', function (err) {
-            return app.log("reconnecting");
+            return app.log("middle reconnecting");
         });
         socket.on('connect', function (props) {
             app.middle.connected = true;
+
+            var _cb = cb;
+
+            cb = undefined;
 
             socket.emit("middle-initialize", app.middle.id);
 
@@ -129,7 +113,9 @@
                 return log(socket, "error", arguments);
             };
 
-            return app.log("connected");
+            app.log("middle connected");
+
+            return _cb && _cb(socket);
         });
         socket.on('disconnect', function (props) {
             app.middle.connected = false;
@@ -141,8 +127,6 @@
 
             return app.log("disconnected", app.middle.id);
         });
-
-        return next && next();
     }
 
     app.starter.$(function (next) {
@@ -154,7 +138,35 @@
                     store.save(ID, app.middle.id);
                 }
 
-                connect(next);
+                return connect(function(socket) {
+                    app.middle.bind = app.middle.on = app.middle.on || function (event, callback, context) {
+                        var events = event.split(/\s+/);
+
+                        _.each(events, function (event) {
+                            if (!watchedEvents[event]) {
+                                watchedEvents[event] = true;
+                                socket.on(event, function () {
+                                    var args = Array.prototype.slice.call(arguments);
+
+                                    args.unshift(event);
+
+                                    return app.middle.trigger.apply(app.middle, args);
+                                });
+                            }
+                        });
+
+                        Backbone.Events.on.call(app.middle, event, callback, context);
+                    };
+                    app.middle.unbind = app.middle.off = app.middle.off || function () {
+                        Backbone.Events.off.apply(app.middle, arguments);
+                    };
+                    app.middle.trigger = app.middle.trigger = app.middle.trigger || function () {
+                        Backbone.Events.trigger.apply(app.middle, arguments);
+                    };
+                    app.middle.emit = emitter(socket);
+
+                    return next();
+                });
             });
         });
     });
