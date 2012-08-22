@@ -59,73 +59,87 @@
         };
     }
 
-    function connect(cb) {
+    function connect(url, cb) {
+        try {
+            return cb(io.connect(url, {
+                "reconnection limit":4001, // four second max delay
+                "max reconnection attempts":Infinity
+            }));
+        }
+        catch(e) {
+            setTimeout(function() {
+                connect(url, cb);
+            }, 500);
+
+            return app.error("io.connect exception", e);
+        }
+    }
+
+    function openSocket(cb) {
         var tryAgain = function() {
                 if (cb) {
                     app.log("middle trying to connect again", err);
                     setTimeout(function() {
-                        connect(cb);
+                        openSocket(cb);
                     }, 500);
                 }
             },
-            url = getServerURL(),
             app_log = app.log,
             app_debug = app.debug,
             app_error = app.error,
-            socket = io.connect(url, {
-                "reconnection limit":4001, // four second max delay
-                "max reconnection attempts":Infinity
-            })
+            url = getServerURL();
 
-        socket.on('error', function (err) {
-            app.error("middle socket error", err);
-            tryAgain();
-        });
-        socket.on('connecting', function () {
-            return app.log("middle connecting");
-        });
-        socket.on('connect_failed', function (err) {
-            app.error("connect_failed", err);
-            tryAgain();
-        });
-        socket.on('reconnect', function () {
-            return app.log("middle reconnect");
-        });
-        socket.on('reconnecting', function (err) {
-            return app.log("middle reconnecting");
-        });
-        socket.on('connect', function (props) {
-            app.middle.connected = true;
+        return connect(url, function(socket) {
+            socket.on('error', function (err) {
+                app.error("middle socket error", err);
+                tryAgain();
+            });
+            socket.on('connecting', function () {
+                return app.log("middle connecting");
+            });
+            socket.on('connect_failed', function (err) {
+                app.error("connect_failed", err);
+                tryAgain();
+            });
+            socket.on('reconnect', function () {
+                return app.log("middle reconnect");
+            });
+            socket.on('reconnecting', function () {
+                return app.log("middle reconnecting");
+            });
+            socket.on('connect', function () {
+                app.middle.connected = true;
 
-            var _cb = cb;
+                var _cb = cb;
 
-            cb = undefined;
+                cb = undefined;
 
-            socket.emit("middle-initialize", app.middle.id);
+                socket.emit("middle-initialize", app.middle.id);
 
-            app.log = function () {
-                return log(socket, "info", arguments);
-            };
-            app.debug = function () {
-                return log(socket, "debug", arguments);
-            };
-            app.error = function () {
-                return log(socket, "error", arguments);
-            };
+                app.log = function () {
+                    return log(socket, "info", arguments);
+                };
+                app.debug = function () {
+                    return log(socket, "debug", arguments);
+                };
+                app.error = function () {
+                    return log(socket, "error", arguments);
+                };
 
-            app.log("middle connected");
+                app.log("middle connected");
 
-            return _cb && _cb(socket);
-        });
-        socket.on('disconnect', function (props) {
-            app.middle.connected = false;
+                return _cb && _cb(socket);
+            });
+            socket.on('disconnect', function () {
+                app.middle.connected = false;
 
-            app.log = app_log;
-            app.debug = app_debug;
-            app.error = app_error;
-            app.middle.trigger("disconnect", app.middle.id)
+                app.log = app_log;
+                app.debug = app_debug;
+                app.error = app_error;
+                app.middle.trigger("disconnect", app.middle.id);
 
-            return app.log("disconnected", app.middle.id);
+                return app.log("disconnected", app.middle.id);
+            });
         });
     }
 
@@ -138,7 +152,7 @@
                     store.save(ID, app.middle.id);
                 }
 
-                return connect(function(socket) {
+                return openSocket(function(socket) {
                     app.middle.bind = app.middle.on = app.middle.on || function (event, callback, context) {
                         var events = event.split(/\s+/);
 
