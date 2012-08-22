@@ -3,7 +3,7 @@
     "use strict";
 
     var path = require("path"),
-        bootstrap = require("site-manager-bootstrap"),
+        bootstrap = require("jolira-bootstrap"),
         templates = path.join(__dirname, "templates"),
         pubdir = path.join(__dirname, "public"),
         clientInit = require("./lib/client-init"),
