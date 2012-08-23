@@ -78,7 +78,7 @@
     function openSocket(cb) {
         var tryAgain = function() {
                 if (cb) {
-                    app.log("middle trying to connect again", err);
+                    app.log("middle trying to connect again");
                     setTimeout(function() {
                         openSocket(cb);
                     }, 500);
