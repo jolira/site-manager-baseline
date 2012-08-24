@@ -63,7 +63,8 @@
         try {
             return cb(io.connect(url, {
                 "reconnection limit":4001, // four second max delay
-                "max reconnection attempts":Infinity
+                "max reconnection attempts":Infinity,
+                "force new connection": true
             }));
         }
         catch(e) {

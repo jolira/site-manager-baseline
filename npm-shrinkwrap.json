@@ -1,0 +1,69 @@
+{
+  "name": "site-manager-baseline",
+  "version": "0.8.16",
+  "dependencies": {
+    "socket.io": {
+      "version": "0.9.10",
+      "dependencies": {
+        "socket.io-client": {
+          "version": "0.9.10",
+          "dependencies": {
+            "uglify-js": {
+              "version": "1.2.5"
+            },
+            "ws": {
+              "version": "0.4.21",
+              "dependencies": {
+                "commander": {
+                  "version": "0.6.1"
+                },
+                "tinycolor": {
+                  "version": "0.0.1"
+                },
+                "options": {
+                  "version": "0.0.3"
+                }
+              }
+            },
+            "xmlhttprequest": {
+              "version": "1.4.2"
+            },
+            "active-x-obfuscator": {
+              "version": "0.0.1",
+              "dependencies": {
+                "zeparser": {
+                  "version": "0.0.5"
+                }
+              }
+            }
+          }
+        },
+        "policyfile": {
+          "version": "0.0.4"
+        },
+        "redis": {
+          "version": "0.7.2"
+        }
+      }
+    },
+    "handlebars": {
+      "version": "1.0.6-2",
+      "dependencies": {
+        "optimist": {
+          "version": "0.3.4",
+          "dependencies": {
+            "wordwrap": {
+              "version": "0.0.2"
+            }
+          }
+        },
+        "uglify-js": {
+          "version": "1.2.6"
+        }
+      }
+    },
+    "jolira-bootstrap": {
+      "version": "2.1.0"
+    }
+  }
+}
