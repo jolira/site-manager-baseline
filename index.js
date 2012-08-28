@@ -11,14 +11,13 @@
         dispatcher = require("./lib/dispatcher");
 
     function addDefaults(defaults) {
+        defaults.scripts.push("socket.io/socket.io.js");
         [
-            // 3rd party libraries
-            "socket.io/socket.io.js",
             "js/libs/underscore/underscore-1.3.3.js",
             "js/libs/jquery/jquery-1.7.2.js",
             "js/libs/backbone/backbone-0.9.2.js",
             "js/bootstrap-collapse.js",
-            // local stuff
+            "js/bootstrap-dropdown.js",
             "js/app-utils.js",
             "js/app-starter.js",
             "js/app-store.js",
