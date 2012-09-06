@@ -14,7 +14,7 @@
         defaults.scripts.push("socket.io/socket.io.js");
         [
             "js/libs/underscore/underscore-1.3.3.js",
-            "js/libs/jquery/jquery-1.7.2.js",
+            "js/libs/jquery/jquery-1.8.1.js",
             "js/libs/backbone/backbone-0.9.2.js",
             "js/bootstrap-collapse.js",
             "js/bootstrap-dropdown.js",

@@ -1,6 +1,6 @@
 {
   "name": "site-manager-baseline",
-  "version": "0.8.16",
+  "version": "0.9.1",
   "dependencies": {
     "socket.io": {
       "version": "0.9.10",
