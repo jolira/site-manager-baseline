@@ -64,11 +64,11 @@
             return cb(io.connect(url, {
                 "reconnection limit":4001, // four second max delay
                 "max reconnection attempts":Infinity,
-                "force new connection": true
+                "force new connection":true
             }));
         }
-        catch(e) {
-            setTimeout(function() {
+        catch (e) {
+            setTimeout(function () {
                 connect(url, cb);
             }, 500);
 
@@ -77,10 +77,10 @@
     }
 
     function openSocket(cb) {
-        var tryAgain = function() {
+        var tryAgain = function () {
                 if (cb) {
                     app.log("middle trying to connect again");
-                    setTimeout(function() {
+                    setTimeout(function () {
                         openSocket(cb);
                     }, 500);
                 }
@@ -90,7 +90,7 @@
             app_error = app.error,
             url = getServerURL();
 
-        return connect(url, function(socket) {
+        return connect(url, function (socket) {
             socket.on('error', function (err) {
                 app.error("middle socket error", err);
                 tryAgain();
@@ -111,11 +111,19 @@
             socket.on('connect', function () {
                 app.middle.connected = true;
 
-                var _cb = cb;
+                var _cb = cb,
+                    device = window.device || {};
 
                 cb = undefined;
 
-                socket.emit("middle-initialize", app.middle.id);
+                socket.emit("middle-initialize", {
+                    id:app.middle.id,
+                    uuid:device.uuid,
+                    name:device.name,
+                    platform:device.platform,
+                    version:device.version,
+                    cordova:device.cordova
+                });
 
                 app.log = function () {
                     return log(socket, "info", arguments);
@@ -146,14 +154,14 @@
 
     app.starter.$(function (next) {
         app.store("middle", function (store) {
-            store.get(ID, function (device) {
-                app.middle.id = (device && device.id) || app.utils.uuid();
+            store.get(ID, function (id) {
+                app.middle.id = (id && id.id) || app.utils.uuid();
 
-                if (!device) {
+                if (!id) {
                     store.save(ID, app.middle.id);
                 }
 
-                return openSocket(function(socket) {
+                return openSocket(function (socket) {
                     app.middle.bind = app.middle.on = app.middle.on || function (event, callback, context) {
                         var events = event.split(/\s+/);
 
