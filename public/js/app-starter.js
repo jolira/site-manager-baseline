@@ -12,16 +12,17 @@
 
     var initializers = [];
 
-    app.starter.$ = function(){
+    app.starter.$ = function(cb, priority){
         if (!initializers) {
             throw new Error("initialization already started");
         }
 
-        var args = Array.prototype.slice.call(arguments);
-
-        args.forEach(function(init) {
-            initializers.push(init);
-        });
+        if (priority) {
+            initializers.unshift(cb);
+        }
+        else {
+            initializers.push(cb);
+        }
     };
 
     function incrementalInit(inits) {
