@@ -40,4 +40,8 @@
             }
         });
     };
+    app.store.reset = function() {
+        localStorage.clear()
+    };
+
 })(window.localStorage, window["jolira-app"]);
