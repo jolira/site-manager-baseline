@@ -153,6 +153,10 @@
     }
 
     app.starter.$(function (next) {
+        if (app.middle.disable) {
+            return next();
+        }
+
         app.store("middle", function (store) {
             store.get(ID, function (id) {
                 app.middle.id = (id && id.id) || app.utils.uuid();
