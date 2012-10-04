@@ -30,10 +30,7 @@
             router = router || app.backbone.route;
 
             router(route, name, function () {
-                var childSelector = app.container.anchor + ' > *[data-sm-container-managed]',
-                    headerSelector = app.container.anchor + ' > header',
-                    $children = $(childSelector),
-                    args = Array.prototype.slice.call(arguments);
+                var args = Array.prototype.slice.call(arguments);
 
                 if (current.close) {
                     current.close();

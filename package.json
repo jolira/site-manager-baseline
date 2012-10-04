@@ -1,6 +1,6 @@
 {
     "name":"site-manager-baseline",
-    "version":"0.10.2",
+    "version":"0.10.3",
     "description":"Client-side UI for the Site-Manager applications",
     "keywords":["site", "html5", "mobile"],
     "contributors": [
